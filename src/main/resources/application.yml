@@ -1,0 +1,6 @@
+spring:
+  aplication:
+    name: ms-transaction
+    config:
+      enabled: true
+      uri: http://localhost:8086
