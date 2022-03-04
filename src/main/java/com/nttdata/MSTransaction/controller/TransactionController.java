@@ -24,26 +24,35 @@ public class TransactionController {
 
     @GetMapping(value = "/get/account/{idAccount}", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Flux<Transaction> findByAccountId(@PathVariable("idAccount") Integer id){
+    public Flux<Transaction> findByAccountId(@PathVariable("idAccount") String id){
         return transactionService.findAllByAccountId(id);
     }
 
-    @GetMapping("/get/{id}")
+    @GetMapping("/{id}")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public ResponseEntity<Mono<Transaction>> findById(@PathVariable("id") Integer id){
+    public ResponseEntity<Mono<Transaction>> findById(@PathVariable("id") String id){
         Mono<Transaction> transactionMono = transactionService.findByTransactionId(id);
         return new ResponseEntity<Mono<Transaction>>(transactionMono, transactionMono != null ? HttpStatus.OK : HttpStatus.NOT_FOUND);
     }
 
+    @GetMapping(value = "/getAll", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @ResponseStatus
+    public Flux<Transaction> findAll(){
+        return transactionService.findAll();
+    }
+
+
     @PutMapping("/update")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public Mono<Transaction> updateTransaction(@RequestBody Transaction t){
-        return transactionService.updateTransaction(t);
+    public ResponseEntity<Mono<Transaction>> updateTransaction(@RequestBody Transaction t){
+        Mono<Transaction> transactionMono = transactionService.updateTransaction(t);
+        return new ResponseEntity<Mono<Transaction>>(transactionMono,
+                transactionMono!=null? HttpStatus.OK:HttpStatus.NOT_FOUND) ;
     }
 
     @DeleteMapping("/delete/{id}")
     @ResponseStatus(HttpStatus.OK)
-    public Mono<Void> deleteById(@PathVariable("id") Integer id){
+    public Mono<Void> deleteById(@PathVariable("id") String id){
         return transactionService.deleteTransaction(id);
     }
 

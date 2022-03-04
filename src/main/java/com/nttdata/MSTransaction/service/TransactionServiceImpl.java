@@ -25,17 +25,22 @@ public class TransactionServiceImpl implements TransactionService {
     }
 
     @Override
-    public Mono<Transaction> findByTransactionId(Integer id) {
+    public Mono<Transaction> findByTransactionId(String id) {
         return transactionRepository.findById(id);
     }
 
     @Override
-    public Flux<Transaction> findAllByAccountId(Integer id) {
+    public Flux<Transaction> findAll() {
+        return transactionRepository.findAll();
+    }
+
+    @Override
+    public Flux<Transaction> findAllByAccountId(String id) {
         return transactionRepository.findAll(Sort.by(String.valueOf(id)));
     }
 
     @Override
-    public Mono<Void> deleteTransaction(Integer id) {
+    public Mono<Void> deleteTransaction(String id) {
         return transactionRepository.deleteById(id);
     }
 }

@@ -7,7 +7,8 @@ import reactor.core.publisher.Mono;
 public interface TransactionService {
     Mono<Transaction> createTransaction(Transaction t);
     Mono<Transaction> updateTransaction(Transaction t);
-    Mono<Transaction> findByTransactionId(Integer id);
-    Flux<Transaction> findAllByAccountId(Integer id);
-    Mono<Void> deleteTransaction(Integer id);
+    Mono<Transaction> findByTransactionId(String id);
+    Flux<Transaction> findAll();
+    Flux<Transaction> findAllByAccountId(String id);
+    Mono<Void> deleteTransaction(String id);
 }
