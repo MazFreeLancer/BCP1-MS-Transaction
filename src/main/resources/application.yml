@@ -10,3 +10,10 @@ spring:
   cloud:
     config:
       profile: dev
+
+backend:
+  eureka:
+    account:
+      get-by-id: http://server-gateway:9020/account/{id}
+      update: http://server-gateway:9020/account/update
+      #get-by-id: http://server-gateway/customer/{id}
