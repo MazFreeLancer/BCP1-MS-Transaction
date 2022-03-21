@@ -1,17 +1,112 @@
 package com.nttdata.MSTransaction.service;
 
-import com.nttdata.MSTransaction.model.Transaction;
-import com.nttdata.MSTransaction.repository.TransactionRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Sort;
+import com.nttdata.MSTransaction.model.Account;
+import com.nttdata.MSTransaction.model.Movements;
+import com.nttdata.MSTransaction.proxy.TransactionProxy;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.util.Date;
+
 @Service
+@RequiredArgsConstructor
 public class TransactionServiceImpl implements TransactionService {
 
-    @Autowired
+    private TransactionProxy TransactionProxy = new TransactionProxy();
+
+    @Override
+    public Mono<Movements> depositIntoAccount(String idAccount, Float amount) {
+
+        return TransactionProxy.getAccount(idAccount)
+                .flatMap(resp->checkMonthlyTransactions(resp, amount))
+                .flatMap(resp->deposit(resp, amount))
+                .flatMap(TransactionProxy::updateAccount)
+                .flatMap(resp->saveMovements(idAccount, "deposit", amount, null));
+
+    }
+
+    @Override
+    public Mono<Movements> cashoutFromAccount(String idAccount, Float amount) {
+        return TransactionProxy.getAccount(idAccount)
+                .flatMap(resp->checkBalance(resp, amount))
+                .flatMap(resp->checkMonthlyTransactions(resp, amount))
+                .flatMap(resp->cashout(resp, amount))
+                .flatMap(TransactionProxy::updateAccount)
+                .flatMap(resp->saveMovements(idAccount, "withdraw", amount, null));
+
+    }
+
+    @Override
+    public Mono<Movements> transferToAccount(String idAccountFrom, String idAccountTo, Float amount) {
+
+        return TransactionProxy.getAccount(idAccountFrom)
+                .flatMap(resp->checkBalance(resp, amount))
+                .flatMap(resp->checkMonthlyTransactions(resp, amount))
+                .flatMap(resp->makeTransaction(resp, idAccountTo, amount));
+    }
+
+
+    //TRANSACTIONS UTIL METHODS
+    public Mono<Account> checkBalance(Account account, Float amount){
+        return account.getBalance()>amount ? Mono.just(account)
+                : Mono.error(()->new IllegalArgumentException("Not enough balance"));
+    }
+
+    public Mono<Account> deposit(Account account, Float amount){
+        account.setBalance(account.getBalance()+amount);
+        return Mono.just(account);
+    }
+
+    public Mono<Account> cashout(Account account, Float amount){
+        account.setBalance(account.getBalance()-amount);
+        return Mono.just(account);
+    }
+
+    public Mono<Account> checkMonthlyTransactions(Account account, Float amount){
+
+        Integer movements = account.getMaxTransactions();
+
+        if(movements>0) {
+            account.setMaxTransactions(movements-1);
+            return Mono.just(account);
+        }else {
+            if(account.getBalance()>amount+account.getCommission()) {
+                account.setBalance(account.getBalance()-account.getCommission());
+                saveMovements(account.getId(), "commission", account.getCommission(), null).subscribe();
+                return Mono.just(account);
+            }else {
+                return Mono.error(() -> new IllegalArgumentException("Not enough balance"));
+            }
+        }
+    }
+
+    public Mono<Movements> makeTransaction(Account accountFrom, String idAccountTo, Float amount){
+        return TransactionProxy.getAccount(idAccountTo)
+                .flatMap(accountTo->deposit(accountTo, amount))
+                .flatMap(TransactionProxy::updateAccount)
+                .flatMap(accountTo->cashout(accountFrom, amount))
+                .flatMap(TransactionProxy::updateAccount)
+                .flatMap(resp->saveMovements(idAccountTo, "transfer from", amount, accountFrom.getId()))
+                .flatMap(resp->saveMovements(accountFrom.getId(), "transfer to", amount, idAccountTo));
+    }
+
+    public Mono<Movements> saveMovements(String idProduct,
+                                     String type,
+                                     Float amount,
+                                     String idThirdPartyProduct) {
+
+        Movements movement = new Movements();
+        movement.setIdProduct(idProduct);
+        movement.setType(type);
+        movement.setAmount(amount);
+        movement.setIdThirdPartyProduct(idThirdPartyProduct);
+        movement.setDate(new Date());
+
+        return TransactionProxy.saveMovements(movement);
+
+    }
+    /*@Autowired
     TransactionRepository transactionRepository;
 
     @Override
@@ -43,4 +138,5 @@ public class TransactionServiceImpl implements TransactionService {
     public Mono<Void> deleteTransaction(String id) {
         return transactionRepository.deleteById(id);
     }
+    */
 }

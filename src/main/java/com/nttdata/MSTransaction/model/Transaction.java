@@ -7,6 +7,8 @@ import lombok.NoArgsConstructor;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
+import java.util.Date;
+
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
@@ -15,8 +17,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 public class Transaction {
     @Id
     private String id;
-    private String idAccount;
+    private String idAccountOrigin;
+    private String idAccountDestiny;
     private Float amount;
-    private String date;
+    //@DateTimeFormat(pattern = "yyyy-mm-dd")
+    private Date date;
     private TransactionType transactionType;
 }
