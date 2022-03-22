@@ -28,12 +28,12 @@ public class TransactionProxy {
                 .bodyToMono(Account.class);
     }
 
-    public Mono<Movements> saveMovements(Movements history) {
+    public Mono<Movements> saveMovements(Movements movement) {
         return webClientBuilder.build()
                 .post()
                 .uri("http://localhost:9020/movements")
                 .contentType(MediaType.APPLICATION_JSON)
-                .body(BodyInserters.fromValue(history))
+                .body(BodyInserters.fromValue(movement))
                 .retrieve()
                 .bodyToMono(Movements.class);
     }

@@ -33,7 +33,7 @@ public class TransactionServiceImpl implements TransactionService {
                 .flatMap(resp->checkMonthlyTransactions(resp, amount))
                 .flatMap(resp->cashout(resp, amount))
                 .flatMap(TransactionProxy::updateAccount)
-                .flatMap(resp->saveMovements(idAccount, "withdraw", amount, null));
+                .flatMap(resp->saveMovements(idAccount, "cashout", amount, null));
 
     }
 
